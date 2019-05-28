@@ -433,7 +433,153 @@ Arrays.sort(people, comparing(Person::getMiddleName, nullsFirst(naturalOrder()))
 
 静态 reverseOrder 方法会提供自然顺序的逆序。要让比较器逆序比较， 可以使用 reversed实例方法 。例如 naturalOrder().reversed() 等同于 reverseOrder()。 
 
-## 6.4 内部类
+## 6.4 内部类（inner class）
+
+内部类（inner class ) 是定义在另一个类中的类。 
+
+* 内部类可以访问该类定义所在的作用域中的数据，包括私有数据
+* 内部类可以对同一个包中的其他类隐藏
+* 当想要定义一个回调函数，且不想编写大量代码时，使用匿名（anonymous）内部类比较便捷
+
+### 6.4.1 使用内部类访问对象状态
+
+内部类既可以访问自身的数据，也可以访问创建它的外围类对象的数据域。
+
+可以理解为内部类有个外部类的引用
+
+### 6.4.2 内部类的特殊语法规则
+
+* 使用外围类引用语法
+
+  OuterClass.this
+
+  ```java
+  public void actionPerformed(ActionEvent event) {
+      if(TalkingClock.this.beep) Toolkit.getDefaulToolkit().beep();
+  }
+  ```
+
+* 编写内部类对象构造器
+
+  outerObject.new InnerClass(construction parameters)
+
+  OuterClass.InnerClass
+
+  ```java
+  ActionListener listener = this.new TimePrinter();
+  
+  TalkingClock jabber = new TalkClock(100, true);
+  TalkingClock.TimerPrinter listener = jabber.new TimePrinter();
+  ```
+
+内部类中的所有静态域必须是final，这是因为一个静态域只有一个实例， 不过对于每个外部对象， 会分别有一个单独的内部类实例。如果这个域不是 final, 它可能就不是唯一的 
+
+内部类不能有static方法
+
+### 6.4.3 内部类是否有用、必要和安全
+
+emmm。。。我看了，又忘了，有什么好多的嘛
+
+### 6.4.4 局部内部类
+
+若内部类只在某个方法被被实例化使用，则可以使用局部内部类，即在方法中定义局部类。
+
+```java
+public void start() {
+    class TimePrinter implements ActionListener {
+        public void actionPerformed(ActionEvent event) {
+            System.out.println("At the tone, the time is " + new Date());
+            if(beep) Toolkit.getDefaultToolkit().beep();
+        }
+    }
+}
+```
+
+**注**： 局部类不能用 public 或 private 访问说明符进行声明。它的作用域被限定在声明这个局部类的块中。 
+
+局部类有一个优势， 即对外部世界可以完全地隐藏起来。 即使 TalkingClock 类中的其他代码也不能访问它。除 start 方法之外， 没有任何方法知道 TimePrinter 类的存在 。
+
+### 6.4.5 由外部方法访问变量
+
+与其他内部类相比较， 局部类还有一个优点。它们不仅能够访问包含它们的外部类， 还可以访问局部变量。不过， 那些局部变量必须事实上为 final。这说明， 它们一旦赋值就绝不会改变 
+
+final 限制显得并不太方便。 可以使用长度为1的数组替换
+
+### 6.4.6 匿名内部类(anonymous inner class)
+
+假如只创建这个类的一个对象，就不必命名了。这种 类被称为匿名内部类（anonymous inner class)。 
+
+```java
+public void start(int interval, boolean beep) {
+    ActionListener listener = new ActionListener() {
+        public void actionPerformed(ActionEvent event) {
+            ystem.out.println("At the tone, the time is " + new Date());
+            if(beep) Toolkit.getDefaultToolkit().beep();
+        }
+    }
+    Timer t = new Timer(interval, listener);
+    t.start();
+}
+语法格式为:
+new SuperType(construction parameters) {
+    inner class  methods and data
+}
+```
+
+可以使用匿名内部类和lambda表达式，现在最好是使用lambda表达式
+
+* 双括号初始化
+
+  假设你想构造一个数组列表， 并将它传递到一个方法 ，如果不再需要这个数组列表， 最好让它作为一个匿名列表。不过作为一个匿名列表，该如何为它添加元素呢？ 注意这里的双括号。 外层括号建立了 ArrayList 的一个匿名子类。 内层括号则是一个对象构造块 
+
+  ```java
+  invite(new ArrayList<String>() {{add("celery"); add("link");}})
+  ```
+
+* 建立一个与超类大体类似（但不完全相同）的匿名子类通常会很方便 。对于 equals 方法要特别当心 。
+
+  if (getClass() != other.getClass()) return false; 对匿名子类做这个测试时会失败。 
+
+* 生成曰志或调试消息时， 通常希望包含当前类的类名 
+
+  Systen.err.println("Something awful happened in " + getClass())； 
+
+  这对于静态方法不奏效。毕竟， 调用 getClass 时调用的是 this.getClass(), 而静态方法没有 this 。所以应该使用以下表达式： 
+
+  new Object(){}.getCIass()-getEndosingClass() // gets class of static method 
+
+  在这里，newObject0{} 会建立 Object 的一个匿名子类的一个匿名对象，getEnclosingClass则得到其外围类， 也就是包含这个静态方法的类。 
+
+### 6.4.7 静态内部类
+
+有时候， 使用内部类只是为了把一个类隐藏在另外一个类的内部，并不需要内部类引用外围类对象。为此，可以将内部类声明为 static, 以便取消产生的引用 
+
+如定义一个Pair内部类，Pair 是一个十分大众化的名字。在大型项目中， 除了定义包含一对字符串的 Pair类之外， 其他程序员也很可能使用这个名字。这样就会产生名字冲突。 解决这个问题的办法是将 Pair 定义为 ArrayAlg 的内部公有类。此后， 通过 ArrayAlg.Pair 访问它 。
+
+只有内部类可以声明为 static。静态内部类的对象除了没有对生成它的外围类对象的引用特权外， 与其他所冇内部类完全一样 
+
+## 6.5 代理(proxy)
+
+### 6.5.1 何时使用代理
+
+利用代理可以在运行时创建一个实现了一组给定接口的新类 : 这种功能只有在编译时无法确定需要实现哪个接口时才有必要使用。 代理类可以在运行时创建全新的类。这样的代理类能够实现指定的接口。尤其是，它具有下列方法： 
+
+* 指定接口所需要的全部方法
+* Object类中的全部方法，例如toString， equals
+
+### 6.5.2 创建代理对象
+
+学习中
+
+### 6.5.3 代理类的特性
+
+学习中
+
+
+
+
+
+
 
 
 
